@@ -1,0 +1,78 @@
+import openai
+import random
+import json
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+class CoffeeRecipeGenerator:
+    def __init__(self):
+        self.coffee_types = ["Espresso", "Cappuccino", "Latte", "Americano", "Mocha", "Cold Brew", "Pour Over"]
+        self.flavors = ["Vanilla", "Caramel", "Hazelnut", "Cinnamon", "Chocolate", "Coconut", "Lavender"]
+        self.milk_types = ["Whole Milk", "Skim Milk", "Almond Milk", "Oat Milk", "Soy Milk", "Coconut Milk"]
+
+    def generate_recipe_prompt(self):
+        coffee_type = random.choice(self.coffee_types)
+        flavor = random.choice(self.flavors)
+        milk = random.choice(self.milk_types)
+
+        prompt = f"Create a unique and creative coffee recipe for a {flavor} {coffee_type} using {milk}. " \
+                 f"Include ingredients, instructions, and a brief description of the flavor profile. " \
+                 f"Format the response as a JSON object with keys: 'name', 'ingredients', 'instructions', and 'description'."
+
+        return prompt
+
+    def generate_recipe(self):
+        prompt = self.generate_recipe_prompt()
+
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are a creative barista with extensive knowledge of coffee."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=500,
+            n=1,
+            stop=None,
+            temperature=0.8,
+        )
+
+        recipe_json = response.choices[0].message.content
+        recipe = json.loads(recipe_json)
+        return recipe
+
+    def print_recipe(self, recipe):
+        print(f"\n=== {recipe['name']} ===\n")
+        print("Ingredients:")
+        for ingredient in recipe['ingredients']:
+            print(f"- {ingredient}")
+        print("\nInstructions:")
+        for i, instruction in enumerate(recipe['instructions'], 1):
+            print(f"{i}. {instruction}")
+        print(f"\nDescription: {recipe['description']}")
+
+def main():
+    generator = CoffeeRecipeGenerator()
+    
+    print("Welcome to the AI-Powered Coffee Recipe Generator!")
+    print("This tool uses GPT-3.5-turbo to create unique coffee recipes.")
+    
+    while True:
+        input("Press Enter to generate a new coffee recipe, or type 'quit' to exit: ")
+        if input.lower() == 'quit':
+            break
+
+        try:
+            recipe = generator.generate_recipe()
+            generator.print_recipe(recipe)
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            print("Please try again.")
+
+    print("Thank you for using the Coffee Recipe Generator. Enjoy your coffee adventures!")
+
+if __name__ == "__main__":
+    main()
